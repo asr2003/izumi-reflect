@@ -75,6 +75,27 @@ class LightTypeTagTest extends SharedLightTypeTagTest {
       assertDebugSame(Tag[Option[String] | Nothing].tag, LTT[Option[String]])
     }
 
+    "normalize nested lambdas with relative depth indices" in {
+      val innerLambda = LightTypeTagRef.Lambda(
+        input = List(LightTypeTagRef.SymName.LambdaParamName(0, 0, 1)),
+        output = LightTypeTagRef.NameReference(LightTypeTagRef.SymName.LambdaParamName(0, 0, 1))
+      )
+
+      val outerLambda = LightTypeTagRef.Lambda(
+        input = List(LightTypeTagRef.SymName.LambdaParamName(0, 0, 1)),
+        output = innerLambda
+      )
+
+      val normalizedOuter = LightTypeTagRef.normalizeLambda(outerLambda)
+
+      assert(normalizedOuter.input.head.depth == -1)
+      assert(
+        normalizedOuter
+          .output
+          .asInstanceOf[LightTypeTagRef.Lambda].input.head.depth == -2
+      )
+    }
+
     "support top-level abstract types (Scala 3 specific, top level type aliases)" in {
       assertChildStrict(LTT[LightTypeTagTestT], LTT[String])
     }
